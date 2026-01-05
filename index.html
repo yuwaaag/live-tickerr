@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Live Ticker</title>
+
+<style>
+body {
+  margin: 0;
+  background: transparent;
+  color: white;
+  font-size: 48px;
+  font-weight: bold;
+  font-family: Arial;
+  padding: 10px;
+}
+</style>
+</head>
+
+<body>
+<div id="ticker">Loading...</div>
+
+<script>
+const DATA_URL = "https://script.google.com/macros/s/AKfycbwudSNKk-tzjGRkWWbk9CYGq1_PaNGl3eYDheXMLKfCNPanQaXwEmGRiFKiKiBsSG_J/exec";
+let lastText = "";
+
+async function loadText() {
+  try {
+    const res = await fetch(DATA_URL + "?t=" + Date.now());
+    const data = await res.json();
+
+    if (data.text && data.text.trim() !== "") {
+      lastText = data.text;
+      document.getElementById("ticker").innerText = lastText;
+    } else {
+      document.getElementById("ticker").innerText = lastText;
+    }
+  } catch (e) {
+    document.getElementById("ticker").innerText = lastText;
+  }
+}
+
+loadText();
+setInterval(loadText, 3000);
+</script>
+
+</body>
+</html>
