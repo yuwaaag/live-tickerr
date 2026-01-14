@@ -1,48 +1,115 @@
 <!DOCTYPE html>
-<html>
+<html lang="hi">
 <head>
-<meta charset="UTF-8">
-<title>Live Ticker</title>
+    <meta charset="UTF-8">
+    <style>
+        body, html { margin: 0; padding: 0; overflow: hidden; background: transparent; font-family: 'Arial', sans-serif; }
+        
+        .ticker-wrapper {
+            width: 1920px;
+            height: 70px;
+            background: linear-gradient(90deg, #b30000 0%, #ff0000 50%, #b30000 100%);
+            display: flex;
+            align-items: center;
+            border-top: 4px solid #ffffff;
+            position: absolute;
+            bottom: 0;
+            box-shadow: 0px -5px 15px rgba(0,0,0,0.5);
+        }
 
-<style>
-body {
-  margin: 0;
-  background: transparent;
-  color: white;
-  font-size: 48px;
-  font-weight: bold;
-  font-family: Arial;
-  padding: 10px;
-}
-</style>
+        .datetime-section {
+            background: white;
+            color: black;
+            height: 100%;
+            padding: 0 30px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            border-right: 5px solid #ffcc00;
+            z-index: 10;
+            min-width: 180px;
+        }
+
+        #clock { font-size: 30px; line-height: 1; }
+        #date { font-size: 14px; margin-top: 5px; color: #555; }
+
+        .ticker-content {
+            overflow: hidden;
+            white-space: nowrap;
+            flex-grow: 1;
+            color: white;
+            font-size: 32px;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        #scroll-text {
+            display: inline-block;
+            padding-left: 100%;
+            animation: scroll-animation 35s linear infinite;
+        }
+
+        @keyframes scroll-animation {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-100%); }
+        }
+
+        .news-bullet {
+            display: inline-block;
+            margin-right: 80px;
+        }
+        .news-bullet::before {
+            content: " ● ";
+            color: #ffcc00;
+            margin-right: 15px;
+        }
+    </style>
 </head>
-
 <body>
-<div id="ticker">Loading...</div>
 
-<script>
-const DATA_URL = "https://script.google.com/macros/s/AKfycbwudSNKk-tzjGRkWWbk9CYGq1_PaNGl3eYDheXMLKfCNPanQaXwEmGRiFKiKiBsSG_J/exec";
-let lastText = "";
+    <div class="ticker-wrapper">
+        <div class="datetime-section">
+            <div id="clock">00:00:00</div>
+            <div id="date">LOADING...</div>
+        </div>
+        <div class="ticker-content">
+            <div id="scroll-text">Connecting to Live News Feed... Please wait.</div>
+        </div>
+    </div>
 
-async function loadText() {
-  try {
-    const res = await fetch(DATA_URL + "?t=" + Date.now());
-    const data = await res.json();
+    <script>
+        // समय और तारीख के लिए
+        function updateTime() {
+            const now = new Date();
+            document.getElementById('clock').innerText = now.toLocaleTimeString('en-GB', { hour12: false });
+            document.getElementById('date').innerText = now.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase();
+        }
+        setInterval(updateTime, 1000);
+        updateTime();
 
-    if (data.text && data.text.trim() !== "") {
-      lastText = data.text;
-      document.getElementById("ticker").innerText = lastText;
-    } else {
-      document.getElementById("ticker").innerText = lastText;
-    }
-  } catch (e) {
-    document.getElementById("ticker").innerText = lastText;
-  }
-}
+        // लाइव न्यूज़ (RSS) के लिए
+        async function fetchNews() {
+            // Google News RSS का इस्तेमाल कर रहे हैं
+            const rssUrl = "https://news.google.com/rss/search?q=india+breaking+news&hl=en-IN&gl=IN&ceid=IN:en";
+            const apiUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssUrl)}`;
 
-loadText();
-setInterval(loadText, 3000);
-</script>
+            try {
+                const response = await fetch(apiUrl);
+                const data = await response.json();
+                if (data.status === 'ok') {
+                    const newsItems = data.items.map(item => `<span class="news-bullet">${item.title}</span>`).join("");
+                    document.getElementById('scroll-text').innerHTML = newsItems + newsItems; // Loop के लिए डबल
+                }
+            } catch (error) {
+                console.error("News Fetch Error:", error);
+                document.getElementById('scroll-text').innerText = "Updating News Feed...";
+            }
+        }
 
+        fetchNews();
+        setInterval(fetchNews, 600000); // हर 10 मिनट में रिफ्रेश
+    </script>
 </body>
 </html>
